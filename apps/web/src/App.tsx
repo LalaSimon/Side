@@ -31,11 +31,46 @@ type EditUserForm = {
   isActive: boolean;
 }
 
+type CompanyRegistrationForm = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  position: string;
+  phoneNumber: string;
+  department: string;
+  company: {
+    name: string;
+    description?: string;
+    address?: string;
+    website?: string;
+    phoneNumber?: string;
+  };
+}
+
 function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registrationForm, setRegistrationForm] = useState<CompanyRegistrationForm>({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    position: '',
+    phoneNumber: '',
+    department: '',
+    company: {
+      name: '',
+      description: '',
+      address: '',
+      website: '',
+      phoneNumber: '',
+    }
+  });
   const [editForm, setEditForm] = useState<EditUserForm>({
     firstName: '',
     lastName: '',
@@ -147,7 +182,267 @@ function App() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Users List</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Users List</h1>
+        <button
+          onClick={() => setShowRegistrationForm(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
+          Create Company Account
+        </button>
+      </div>
+
+      {/* Company Registration Modal */}
+      {showRegistrationForm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Create Company Account</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  setRegistering(true);
+                  const response = await fetch('http://localhost:3000/api/users/register', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registrationForm),
+                  });
+
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to create company account');
+                  }
+
+                  await fetchUsers();
+                  setShowRegistrationForm(false);
+                  setRegistrationForm({
+                    email: '',
+                    password: '',
+                    firstName: '',
+                    lastName: '',
+                    position: '',
+                    phoneNumber: '',
+                    department: '',
+                    company: {
+                      name: '',
+                      description: '',
+                      address: '',
+                      website: '',
+                      phoneNumber: '',
+                    }
+                  });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Failed to create company account');
+                } finally {
+                  setRegistering(false);
+                }
+              }} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">First Name</label>
+                    <input
+                      type="text"
+                      value={registrationForm.firstName}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        firstName: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input
+                      type="text"
+                      value={registrationForm.lastName}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        lastName: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      value={registrationForm.email}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        email: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <input
+                      type="password"
+                      value={registrationForm.password}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        password: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Company Name</label>
+                  <input
+                    type="text"
+                    value={registrationForm.company.name}
+                    onChange={(e) => setRegistrationForm(prev => ({
+                      ...prev,
+                      company: {
+                        ...prev.company,
+                        name: e.target.value
+                      }
+                    }))}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Company Description</label>
+                  <input
+                    type="text"
+                    value={registrationForm.company.description}
+                    onChange={(e) => setRegistrationForm(prev => ({
+                      ...prev,
+                      company: {
+                        ...prev.company,
+                        description: e.target.value
+                      }
+                    }))}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Company Address</label>
+                    <input
+                      type="text"
+                      value={registrationForm.company.address}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        company: {
+                          ...prev.company,
+                          address: e.target.value
+                        }
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Company Website</label>
+                    <input
+                      type="text"
+                      value={registrationForm.company.website}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        company: {
+                          ...prev.company,
+                          website: e.target.value
+                        }
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Position</label>
+                    <input
+                      type="text"
+                      value={registrationForm.position}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        position: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Department</label>
+                    <input
+                      type="text"
+                      value={registrationForm.department}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        department: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={registrationForm.phoneNumber}
+                      onChange={(e) => setRegistrationForm(prev => ({
+                        ...prev,
+                        phoneNumber: e.target.value
+                      }))}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRegistrationForm(false);
+                      setRegistrationForm({
+                        email: '',
+                        password: '',
+                        firstName: '',
+                        lastName: '',
+                        position: '',
+                        phoneNumber: '',
+                        department: '',
+                        company: {
+                          name: '',
+                          description: '',
+                          address: '',
+                          website: '',
+                          phoneNumber: '',
+                        }
+                      });
+                    }}
+                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded"
+                    disabled={registering}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={registering}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50"
+                  >
+                    {registering ? 'Creating...' : 'Create Company Account'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
