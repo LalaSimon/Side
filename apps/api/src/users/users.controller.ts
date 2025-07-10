@@ -76,10 +76,10 @@ export class UsersController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data',
   })
-  async updateUser(
+  updateUser(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<Omit<User, 'password'>> {
-    return this.usersService.updateUser(id, dto);
+    return this.usersService.update(id, dto);
   }
 }
