@@ -5,10 +5,14 @@ import {
   HttpCode,
   HttpStatus,
   Get,
+  Put,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from '@prisma/client';
 
 @ApiTags('Users')
@@ -45,5 +49,37 @@ export class UsersController {
   })
   async getUsers(): Promise<User[]> {
     return this.usersService.getUsers();
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'User UUID',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully updated',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Email already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  async updateUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'>> {
+    return this.usersService.updateUser(id, dto);
   }
 }

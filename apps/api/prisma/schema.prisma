@@ -16,6 +16,7 @@ model User {
   password      String
   firstName     String
   lastName      String
+  companyName   String    @default("Unknown Company") // Nazwa firmy z wartością domyślną
   role          UserRole  @default(EMPLOYEE)
   position      String?   // Stanowisko w firmie
   phoneNumber   String?

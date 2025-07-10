@@ -2,9 +2,11 @@ import {
   Injectable,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { IUserService } from './interfaces/user-service.interface';
 import { User } from '@prisma/client';
 import { hash } from 'bcrypt-ts';
@@ -34,6 +36,7 @@ export class UsersService implements IUserService {
         email: true,
         firstName: true,
         lastName: true,
+        companyName: true,
         role: true,
         position: true,
         phoneNumber: true,
@@ -47,6 +50,55 @@ export class UsersService implements IUserService {
     });
 
     return user;
+  }
+
+  async updateUser(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'>> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.email && dto.email !== existingUser.email) {
+      const emailTaken = await this.isEmailTaken(dto.email);
+      if (emailTaken) {
+        throw new ConflictException('Email already exists');
+      }
+    }
+
+    const updateData: Partial<User> = { ...dto };
+
+    if (dto.password) {
+      updateData.password = await this.hashPassword(dto.password);
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        companyName: true,
+        role: true,
+        position: true,
+        phoneNumber: true,
+        department: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLoginAt: true,
+        isActive: true,
+        avatar: true,
+      },
+    });
+
+    return updatedUser;
   }
 
   async findByEmail(email: string): Promise<User | null> {

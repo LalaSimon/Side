@@ -4,6 +4,7 @@ import {
   MinLength,
   IsOptional,
   Matches,
+  IsNotEmpty,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -34,6 +35,11 @@ export class RegisterUserDto {
     { message: 'Password is too weak' },
   )
   password: string;
+
+  @ApiProperty({ example: 'Volvo' })
+  @IsString()
+  @IsNotEmpty()
+  companyName: string;
 
   @ApiPropertyOptional({ example: 'Sales' })
   @IsOptional()
