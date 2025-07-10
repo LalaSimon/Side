@@ -26,30 +26,17 @@ export class UsersService implements IUserService {
     if (alreadyCreated) {
       throw new ConflictException('Email already exists');
     }
+
     const user = await this.prisma.user.create({
       data: {
         ...dto,
         password: hashedPassword,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        companyName: true,
-        role: true,
-        position: true,
-        phoneNumber: true,
-        department: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLoginAt: true,
-        isActive: true,
-        avatar: true,
-      },
     });
 
-    return user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async updateUser(
@@ -80,25 +67,11 @@ export class UsersService implements IUserService {
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: updateData,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        companyName: true,
-        role: true,
-        position: true,
-        phoneNumber: true,
-        department: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLoginAt: true,
-        isActive: true,
-        avatar: true,
-      },
     });
 
-    return updatedUser;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -124,6 +97,15 @@ export class UsersService implements IUserService {
   }
 
   async getUsers(): Promise<User[]> {
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany({
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
   }
 }

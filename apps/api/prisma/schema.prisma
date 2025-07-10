@@ -10,13 +10,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  address     String?
+  website     String?
+  phoneNumber String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+  
+  // Relationships
+  users       User[]    // One-to-many relationship with users
+  headAdmin   User?     @relation("CompanyHeadAdmin", fields: [headAdminId], references: [id])
+  headAdminId String?   @unique // Each company has exactly one head admin
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
   password      String
   firstName     String
   lastName      String
-  companyName   String    @default("Unknown Company") // Nazwa firmy z wartością domyślną
   role          UserRole  @default(EMPLOYEE)
   position      String?   // Stanowisko w firmie
   phoneNumber   String?
@@ -27,6 +43,13 @@ model User {
   avatar        String?   // URL do avatara
   department    String?   // Dział w firmie
   
+  // Company relationship
+  company       Company?  @relation(fields: [companyId], references: [id])
+  companyId     String?
+  
+  // Head Admin relationship
+  headAdminFor  Company?  @relation("CompanyHeadAdmin")
+  
   // Dodatkowe informacje biznesowe
   assignedDeals     Deal[]    @relation("AssignedDeals")
   createdDeals      Deal[]    @relation("CreatedDeals")
@@ -36,6 +59,7 @@ model User {
 }
 
 enum UserRole {
+  HEAD_ADMIN
   ADMIN
   MANAGER
   EMPLOYEE
